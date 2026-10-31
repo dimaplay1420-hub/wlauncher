@@ -72,6 +72,7 @@
   <div class="stats" id="adStats"></div>
   <div class="panel"><h2>Пользователи</h2><div class="tw"><table><thead><tr><th>Ник</th><th>Почта</th><th>Роль</th><th>Дата</th><th></th></tr></thead><tbody id="adUsers"></tbody></table></div></div>
   <div class="panel"><h2>Отзывы</h2><div class="tw"><table><thead><tr><th>Автор</th><th>Оценка</th><th>Текст</th><th></th></tr></thead><tbody id="adRevs"></tbody></table></div></div>
+  <div class="panel"><h2>Промокоды</h2><div class="tw"><table><thead><tr><th>Код</th><th>Использовано</th><th>Награда</th></tr></thead><tbody id="adPromo"></tbody></table></div></div>
   <div class="panel"><h2>Загрузки</h2><div class="kv" id="adDl"></div>
     <p style="color:var(--mute);font-size:13px;margin-top:16px">Данные хранятся в браузере. Ссылки на файлы лаунчера задаются в начале скрипта страницы (CONFIG).</p></div>
 </div></main>
@@ -95,6 +96,7 @@
 </div></div>
 <div class="modal" id="dailyM" onclick="if(event.target===this)closeDaily()"><div class="box"><h2>Ежедневная награда</h2><div id="dailyBody"></div><button class="btn g s" style="margin-top:14px;width:100%" onclick="closeDaily()">Закрыть</button></div></div>
 <div class="modal" id="cfM"><div class="box"><h2>Подтверждение</h2><p id="cfT" style="margin-top:8px"></p><div class="cta" style="margin-top:20px;justify-content:flex-end"><button class="btn g s" style="width:auto;margin:0" onclick="cfNo()">Отмена</button><button class="btn p s" style="width:auto;margin:0" onclick="cfYes()">Да</button></div></div></div>
+<div class="modal rwm" id="rwM" onclick="if(event.target===this)closeReward()"><div class="rwfx" id="rwFx"></div><div class="rwc"><div class="rwray"></div><small>Промокод активирован</small><h2 id="rwCode"></h2><div class="rwi" id="rwItems"></div><button class="btn p" style="width:100%" onclick="closeReward()">Забрать</button></div></div>
 <div id="toast"></div>
 
 <script src="js/config.js"></script>

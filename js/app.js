@@ -1,4 +1,4 @@
-// Логика сайта: аккаунты, кабинет, отзывы, скины, друзья, Спарк, админ панель.
+// Логика сайта: аккаунты, кабинет, промокоды, коины, отзывы, админ панель.
 // Настройки лежат в js/config.js (подключается раньше).
 const mem={};
 const st={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return k in mem?mem[k]:d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}}};
@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let mode="login";
 const isAdm=u=>u&&u.email===CONFIG.ADMIN_EMAIL.toLowerCase();
-const me=()=>{const e=st.get("wl_session",null);return st.get("wl_users",[]).find(u=>u.email===e)||null};
+const me=()=>{const us=st.get("wl_users",[]),now=Date.now();let ch=false;us.forEach(u=>{if(u.sponsorUntil&&u.sponsorUntil<=now){u.sponsor=false;delete u.sponsorUntil;ch=true}});if(ch)st.set("wl_users",us);const e=st.get("wl_session",null);return us.find(u=>u.email===e)||null};
 function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",3500)}
 async function hash(p,s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 const bd=u=>u&&u.sponsor&&u.badge!==false?'<i class="mk ck i5" title="Спонсор"></i>':"";
@@ -32,13 +32,24 @@ async function submitAuth(){
   }else if(!u||u.h!==await hash(pass,u.salt))return E.textContent="Неверная почта или пароль";
   st.set("wl_session",mail);closeAuth();$("fPass").value="";nav();show(isAdm(u)?"admin":"cabinet");toast(mode==="reg"?"Аккаунт создан":"С возвращением, "+u.nick+"!")}
 
-function skinTab(u){return '<div class="rows"><div class="sub">Скин Minecraft</div><div class="row"><span class="rowf">'+(u.skin?'<canvas class="skc" width="96" height="192"></canvas>':'<span class="empty" style="padding:20px">Скин не загружен</span>')+'</span><span class="rowf"><button class="btn g s" onclick="$(\'fSk\').click()">Загрузить скин</button>'+(u.skin?'<button class="btn d" onclick="clr(\'skin\')">Убрать</button>':"")+'</span></div><p style="color:var(--mute);font-size:13px">PNG 64×64 или 64×32. Предпросмотр рисуется из вашего файла прямо на сайте.</p><input type="file" id="fSk" accept="image/png" hidden onchange="upSkin(this)"></div>'}
-function upSkin(inp){const f=inp.files[0];inp.value="";if(!f||f.type!=="image/png")return toast("Нужен PNG-файл скина");const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{if(im.width!==64||(im.height!==64&&im.height!==32))return toast("Скин должен быть 64×64 или 64×32");upd(u=>u.skin=r.result);renderCab();toast("Скин загружен")};im.onerror=()=>toast("Не удалось открыть файл");im.src=r.result};r.readAsDataURL(f)}
-function drawSkins(){const u=me();if(!u||!u.skin)return;document.querySelectorAll("canvas.skc").forEach(c=>{const im=new Image();im.onload=()=>{const x=c.getContext("2d"),s=6,m=im.height>=64;x.imageSmoothingEnabled=false;const d=(a,b,w,h,p,q)=>x.drawImage(im,a,b,w,h,p*s,q*s,w*s,h*s);d(8,8,8,8,4,0);d(40,8,8,8,4,0);d(20,20,8,12,4,8);d(44,20,4,12,0,8);m?d(36,52,4,12,12,8):d(44,20,4,12,12,8);d(4,20,4,12,4,20);m?d(20,52,4,12,8,20):d(4,20,4,12,8,20)};im.src=u.skin})}
-function friendsTab(u){const us=st.get("wl_users",[]),F=(u.friends||[]).map(e=>us.find(x=>x.email===e)).filter(Boolean);
-  return '<div class="rows"><div class="sub">Добавить друга</div><div class="row fm"><input id="fNickIn" maxlength="16" placeholder="Ник игрока"><button class="btn p s" onclick="addFr()">Добавить</button></div><div class="sub">Друзья ('+F.length+')</div>'+(F.length?F.map(f=>'<div class="row"><span class="rowf">'+avh(f,40)+"<b>"+nk(f)+bd(f)+'</b></span><button class="btn d" data-e="'+esc(f.email)+'" onclick="rmFr(this.dataset.e)">Удалить</button></div>').join(""):'<div class="empty">Пока никого. Найдите друга по нику.</div>')+"</div>"}
-function addFr(){const n=$("fNickIn").value.trim().toLowerCase(),u=me(),f=st.get("wl_users",[]).find(x=>x.nick.toLowerCase()===n);if(!n)return;if(!f)return toast("Игрок с таким ником не найден");if(f.email===u.email)return toast("Это вы");if((u.friends||[]).includes(f.email))return toast("Уже в друзьях");upd(x=>{(x.friends=x.friends||[]).push(f.email)});renderCab();toast(f.nick+" добавлен в друзья")}
-function rmFr(e){upd(u=>{u.friends=(u.friends||[]).filter(x=>x!==e)});renderCab()}
+const promoText=k=>{const p=CONFIG.PROMOS[k];return p?"W+ на "+p.days+" дн. и "+p.coins+" коинов":"активирован"};
+const wpTxt=u=>u.sponsor?(u.sponsorUntil?"активен до "+new Date(u.sponsorUntil).toLocaleDateString("ru-RU"):"навсегда"):"нет";
+function promoTab(u){const used=u.promos||[];return '<div class="rows"><div class="sub">Активировать промокод</div><div class="row fm"><input id="pIn" placeholder="Введите промокод" maxlength="32" onkeydown="if(event.key===\'Enter\')redeem()"><button class="btn p s" onclick="redeem()">Активировать</button></div>'+(used.length?'<div class="sub">Активированные</div>'+used.map(k=>row(esc(k),promoText(k))).join(""):"")+"</div>"}
+function redeem(){const raw=$("pIn").value.trim().toLowerCase(),u=me();if(!raw)return toast("Введите промокод");
+  const key=Object.keys(CONFIG.PROMOS).find(k=>k.toLowerCase()===raw);if(!key)return toast("Такого промокода нет");
+  const p=CONFIG.PROMOS[key],cnt=st.get("wl_promo",{});
+  if((u.promos||[]).includes(key))return toast("Вы уже активировали этот промокод");
+  if((cnt[key]||0)>=p.max)return toast("Промокод закончился: он уже использован "+p.max+" раз");
+  cnt[key]=(cnt[key]||0)+1;st.set("wl_promo",cnt);let perm=false;
+  upd(x=>{x.coins=(x.coins||0)+p.coins;perm=!!x.sponsor&&!x.sponsorUntil;if(!perm){x.sponsor=true;x.sponsorUntil=Math.max(Date.now(),x.sponsorUntil||0)+p.days*864e5}(x.promos=x.promos||[]).push(key)});
+  nav();renderCab();showReward(key,p,perm)}
+function showReward(key,p,perm){$("rwCode").textContent=key;
+  $("rwItems").innerHTML='<div class="ri" style="--i:0"><img src="assets/coin.png" alt="" width="56" height="56"><b>+<span id="rwN">0</span></b><span>коинов</span></div>'+(perm?"":'<div class="ri" style="--i:1"><div class="wpb">W+</div><b>'+p.days+' дней</b><span>статус спонсора</span></div>');
+  $("rwM").classList.add("open");burst();const el=$("rwN");
+  setTimeout(()=>{const s=performance.now();(function f(n){const t=Math.min((n-s)/1200,1);el.textContent=fmt(Math.round(p.coins*(1-Math.pow(1-t,3))));if(t<1)requestAnimationFrame(f)})(s)},550)}
+function burst(){const fx=$("rwFx");fx.innerHTML="";const C=["#ff6a00","#ffa04d","#ffd54a","#ffffff","#ff3d00"];for(let i=0;i<48;i++){const e=document.createElement("i"),a=Math.random()*Math.PI*2,d=140+Math.random()*260;e.style.cssText="--dx:"+Math.cos(a)*d+"px;--dy:"+(Math.sin(a)*d-60)+"px;--r:"+Math.round(Math.random()*720-360)+"deg;background:"+C[i%C.length]+";animation-delay:"+(Math.random()*.25).toFixed(2)+"s;width:"+Math.round(6+Math.random()*6)+"px;height:"+Math.round(10+Math.random()*8)+"px";fx.appendChild(e)}}
+function closeReward(){$("rwM").classList.remove("open");$("rwFx").innerHTML="";document.querySelectorAll(".coinp").forEach(e=>{e.classList.remove("bump");void e.offsetWidth;e.classList.add("bump")})}
+function renderAdPromo(){const cnt=st.get("wl_promo",{});$("adPromo").innerHTML=Object.keys(CONFIG.PROMOS).map(k=>"<tr><td>"+esc(k)+"</td><td>"+(cnt[k]||0)+" / "+CONFIG.PROMOS[k].max+"</td><td>"+promoText(k)+"</td></tr>").join("")}
 let cfFn=null;function ask(t,f){cfFn=f;$("cfT").textContent=t;$("cfM").classList.add("open")}
 function cfNo(){cfFn=null;$("cfM").classList.remove("open")}function cfYes(){const f=cfFn;cfNo();if(f)f()}
 function logout(){st.set("wl_session",null);nav();show("home")}
@@ -48,26 +59,26 @@ const mask=u=>u.hideMail?esc(u.email.replace(/^(.).*(@.*)$/,"$1•••$2")):es
 function cabTab(t){cab=t;renderCab()}
 function upd(f){const us=st.get("wl_users",[]),u=us.find(x=>x.email===st.get("wl_session",null));if(u){f(u);st.set("wl_users",us)}return u}
 function renderCab(){const u=me();if(!u)return show("home");
-  const T=[["profile","Профиль"],["look","Косметика"],["skin","Скин"],["fr","Друзья"],["dl","Загрузки"],["set","Настройки"]];
+  const T=[["profile","Профиль"],["look","Косметика"],["promo","Промокоды"],["dl","Загрузки"],["set","Настройки"]];
   $("cTabs").innerHTML=T.map(t=>'<button class="'+(cab===t[0]?"on":"")+'" onclick="cabTab(\''+t[0]+'\')">'+t[1]+"</button>").join("")+(isAdm(u)?'<button onclick="show(\'admin\')">Админ панель</button>':"");
   $("cAv").innerHTML=avh(u,38);
   const d=st.get("wl_dl",{windows:0,macos:0,linux:0}),tot=d.windows+d.macos+d.linux,dt=new Date(u.created).toLocaleDateString("ru-RU");let h="";
   if(cab==="profile"){const ban=u.banner?"background-image:url('"+u.banner+"')":"";
-    h='<div class="ban" style="'+ban+'"></div><div class="pgrid"><div class="pcard"><div style="display:grid;justify-items:center;margin:-64px 0 16px">'+avh(u,92)+"</div><b>"+nk(u)+bd(u)+'</b><span class="chip">'+role(u)+'</span><div style="color:var(--mute);font-size:13px">на сайте с '+dt+'</div></div><div class="rows">'+row("Почта",mask(u))+row("Роль",role(u))+row("Регистрация",dt)+row("Скачиваний в этом браузере",tot)+"</div></div>"}
+    h='<div class="ban" style="'+ban+'"></div><div class="pgrid"><div class="pcard"><div style="display:grid;justify-items:center;margin:-64px 0 16px">'+avh(u,92)+"</div><b>"+nk(u)+bd(u)+'</b><span class="chip">'+role(u)+'</span><div style="color:var(--mute);font-size:13px">на сайте с '+dt+'</div></div><div class="rows">'+row("Почта",mask(u))+row("Роль",role(u))+row("Коины",fmt(u.coins||0))+row("W+",wpTxt(u))+row("Регистрация",dt)+row("Скачиваний в этом браузере",tot)+"</div></div>"}
   else if(cab==="look"){const cur=u.color||(u.sponsor?"gold":""),fcur=u.frame||(u.sponsor?"flame":"none");
     const sw=(kind,tbl,c2)=>'<div class="swt">'+Object.keys(tbl).map(k=>{const e=tbl[k],lock=(kind==="color"?e[2]:e[1])&&!u.sponsor;return '<button class="'+((kind==="color"?cur:fcur)===k?"on":"")+(lock?" lk":"")+'" onclick="setLook(\''+kind+"','"+k+'\')">'+(kind==="color"?nk({nick:e[0],color:k,sponsor:true}):avh({nick:u.nick,avatar:u.avatar,frame:k,sponsor:true},34)+"<span>"+e[0]+"</span>")+(lock?"<small>только спонсоры</small>":"")+"</button>"}).join("")+"</div>";
     h='<div class="rows"><div class="sub">Аватар</div><div class="row"><span class="rowf">'+avh(u,56)+'<span>JPG, PNG или GIF</span></span><span class="rowf"><button class="btn g s" onclick="$(\'fAv\').click()">Загрузить</button>'+(u.avatar?'<button class="btn d" onclick="clr(\'avatar\')">Убрать</button>':"")+'</span></div>'+
     '<div class="sub">Баннер</div><div class="row"><span class="rowf"><span class="bprev" style="'+(u.banner?"background-image:url('"+u.banner+"')":"")+'"></span></span><span class="rowf"><button class="btn g s" onclick="$(\'fBn\').click()">Загрузить</button>'+(u.banner?'<button class="btn d" onclick="clr(\'banner\')">Убрать</button>':"")+"</span></div>"+
     '<div class="sub">Цвет ника</div>'+sw("color",COLORS)+'<div class="sub">Рамка аватара</div>'+sw("frame",FRAMES)+
     '<input type="file" id="fAv" accept="image/*" hidden onchange="upImg(this,\'avatar\',160,160)"><input type="file" id="fBn" accept="image/*" hidden onchange="upImg(this,\'banner\',720,240)"></div>'}
-  else if(cab==="skin")h=skinTab(u);else if(cab==="fr")h=friendsTab(u);
+  else if(cab==="promo")h=promoTab(u);
   else if(cab==="dl")h='<div class="rows">'+[["Windows","Windows 10 и новее","windows"]].map(r=>'<div class="row"><span><b style="display:block;text-align:left">'+r[0]+"</b>"+r[1]+'</span><button class="btn p s" onclick="dl(\''+r[2]+'\')"><i class="mk di i1"></i>Скачать</button></div>').join("")+row("Актуальная версия",CONFIG.VERSION)+"</div>";
   else{const tr=(k,l,on)=>'<div class="row t'+(on?" on":"")+'" onclick="pref(\''+k+'\')"><span>'+l+'</span><i class="tg"></i></div>';
     h='<div class="rows"><div class="sub">Сайт</div>'+tr("anim","Анимации на сайте",u.anim!==false)+tr("hideMail","Скрывать почту в кабинете",!!u.hideMail)+(u.sponsor?tr("badge","Показывать галочку спонсора",u.badge!==false):"")+
     '<div class="sub">Аккаунт</div><div class="frm"><div class="row fm"><input id="sNick" maxlength="16" value="'+esc(u.nick)+'" placeholder="Новый ник"><button class="btn g s" onclick="saveNick()">Сменить ник</button></div>'+
     '<div class="row fm"><input id="sP0" type="password" placeholder="Текущий пароль"><input id="sP1" type="password" placeholder="Новый пароль"><button class="btn g s" onclick="savePass()">Сменить пароль</button></div></div>'+
     '<div class="cta" style="margin-top:8px"><button class="btn g s" onclick="logout()">Выйти</button><button class="btn d" onclick="delAcc()">Удалить аккаунт</button></div></div>'}
-  $("cBody").innerHTML=h;drawSkins()}
+  $("cBody").innerHTML=h}
 const COLORS={orange:["Оранжевый","#ff8a2a",0],white:["Белый","#f6f0e9",0],blue:["Голубой","#5ab0ff",0],green:["Зелёный","#4ade80",0],pink:["Розовый","#ff6ad5",0],gold:["Золото","",1],aurora:["Аврора","",1]};
 const FRAMES={none:["Без рамки",0],ring:["Оранжевая",0],blue:["Голубая",0],dash:["Пунктир",0],flame:["Пламя",1]};
 const nk=u=>{const k=u.color||(u.sponsor?"gold":""),c=COLORS[k];if(!c||(c[2]&&!u.sponsor))return esc(u.nick);return c[2]?'<span class="nk-'+k+'">'+esc(u.nick)+"</span>":'<span style="color:'+c[1]+'">'+esc(u.nick)+"</span>"};
@@ -98,11 +109,11 @@ async function savePass(){const u=me(),a=$("sP0").value,b=$("sP1").value;if(awai
   const salt=crypto.randomUUID(),h=await hash(b,salt);upd(x=>{x.salt=salt;x.h=h});renderCab();toast("Пароль изменён")}
 function delAcc(){const u=me();ask("Удалить аккаунт безвозвратно?",()=>{st.set("wl_users",st.get("wl_users",[]).filter(x=>x.email!==u.email));st.set("wl_reviews",revs().filter(r=>r.email!==u.email));logout();toast("Аккаунт удалён")})}
 function renderAdRevs(){const R=revs().slice().sort((a,b)=>b.ts-a.ts);$("adRevs").innerHTML=R.length?R.map(r=>"<tr><td>"+esc(r.nick)+"</td><td>"+stars(r.stars)+'</td><td style="white-space:normal;min-width:200px">'+esc(r.text)+'</td><td><button class="btn d" data-e="'+esc(r.email)+'" onclick="delRev(this.dataset.e)">Удалить</button></td></tr>').join(""):'<tr><td colspan="4">Отзывов нет</td></tr>'}
-function renderAdmin(){renderAdRevs();const us=st.get("wl_users",[]),d=st.get("wl_dl",{windows:0,macos:0,linux:0}),tot=d.windows+d.macos+d.linux;
+function renderAdmin(){renderAdRevs();renderAdPromo();const us=st.get("wl_users",[]),d=st.get("wl_dl",{windows:0,macos:0,linux:0}),tot=d.windows+d.macos+d.linux;
   $("adStats").innerHTML=[[us.length,"Пользователей"],[us.filter(isAdm).length,"Админов"],[us.filter(x=>x.sponsor).length,"Спонсоров"],[tot,"Скачиваний"],[revs().length,"Отзывов"],[CONFIG.VERSION,"Версия"]].map(s=>'<div class="stat"><b>'+s[0]+"</b><span>"+s[1]+"</span></div>").join("");
   $("adUsers").innerHTML=us.map(u=>"<tr><td>"+nk(u)+bd(u)+"</td><td>"+esc(u.email)+'</td><td><span class="badge'+(isAdm(u)||u.sponsor?" a":"")+'">'+role(u)+"</span></td><td>"+new Date(u.created).toLocaleDateString("ru-RU")+"</td><td>"+'<button class="btn sp" data-e="'+esc(u.email)+'" onclick="toggleSp(this.dataset.e)">'+(u.sponsor?"Снять спонсора":"Спонсор")+'</button> '+(isAdm(u)?"":'<button class="btn d" data-e="'+esc(u.email)+'" onclick="delUser(this.dataset.e)">Удалить</button>')+"</td></tr>").join("");
   $("adDl").innerHTML=[["Windows",d.windows]].map(r=>"<span>"+r[0]+"</span><span>"+r[1]+"</span>").join("")}
-function toggleSp(e){const us=st.get("wl_users",[]),u=us.find(x=>x.email===e);if(!u)return;u.sponsor=!u.sponsor;st.set("wl_users",us);nav();renderAdmin()}
+function toggleSp(e){const us=st.get("wl_users",[]),u=us.find(x=>x.email===e);if(!u)return;u.sponsor=!u.sponsor;delete u.sponsorUntil;st.set("wl_users",us);nav();renderAdmin()}
 function delUser(e){ask("Удалить пользователя "+e+"?",()=>{st.set("wl_users",st.get("wl_users",[]).filter(u=>u.email!==e));st.set("wl_reviews",revs().filter(r=>r.email!==e));renderAdmin();renderReviews();renderWall()})}
 function dl(os){const d=st.get("wl_dl",{windows:0,macos:0,linux:0});const url=CONFIG.DOWNLOADS[os];
   if(!url)return toast("Файл лаунчера для этой системы скоро появится");
