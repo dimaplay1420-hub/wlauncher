@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WLauncher — бесплатный лаунчер Minecraft</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<script>try{var t=localStorage.getItem("wl_theme");document.documentElement.dataset.theme=t?JSON.parse(t):"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="glow"></div>
+<nav class="dock">
+  <a class="logo" onclick="show('home')" href="#top"><img src="assets/logo.png" alt="WLauncher"><span>WLauncher</span></a>
+  <ul><li><a href="#plans" onclick="show('home')">Тарифы</a></li><li><a href="#sponsors" onclick="show('home')">Спонсоры</a></li><li><a href="#reviews" onclick="show('home')">Отзывы</a></li><li><a href="#download" onclick="show('home')">Скачать</a></li><li><a href="#faq" onclick="show('home')">FAQ</a></li></ul>
+  <button class="th" id="thBtn" onclick="toggleTheme()" aria-label="Сменить тему"></button>
+  <div class="nr" id="navR"></div>
+</nav>
+
+<main id="v-home">
+<header class="wrap hero" id="top">
+  <div>
+    <span class="pill pv"><img src="assets/logo.png" alt=""><span>WLauncher v<span class="vtag"></span></span><b>ALPHA</b></span>
+    <h1>Играй по<br><span>своим правилам</span></h1>
+    <p>WLauncher — быстрый лаунчер для Minecraft. Моды, сборки, ресурспаки и игра с друзьями в пару кликов.</p>
+    <div class="cta"><a href="#download" class="btn p"><i class="mk di i1"></i>Скачать лаунчер</a><a href="#plans" class="btn g">Тарифы</a></div>
+    
+  </div>
+</header>
+
+<section id="plans" style="padding-top:20px"><div class="wrap">
+  <div class="head"><small>Тарифы</small><h2>Выберите свою версию</h2><p>Лаунчер полностью бесплатен. W+ это спонсорка: вы поддерживаете проект и получаете особые вещи.</p></div>
+  <div class="plans">
+    <article class="plan"><h3><i class="dot"></i>W</h3><p class="ptg">Каждому доступно</p><div class="price">0₽<small>/мес</small></div><div class="inc"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span><b>Полный</b> доступ к лаунчеру</span></div><ul class="plist"><li><b>Весь</b> основной функционал</li><li>Моды и сборки в пару кликов</li><li>Друзья и сетевая игра</li><li>Хорошее настроение</li></ul><div class="cta"><a class="btn g" href="#download">Скачать бесплатно</a></div></article>
+    <article class="plan pl"><h3><i class="dot"></i>W+</h3><p class="ptg">Спонсорка WLauncher</p><div class="price">49₽<small>/мес</small></div><div class="inc"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span><b>Полный</b> доступ к лаунчеру</span></div><ul class="plist"><li><b>Весь</b> основной функционал</li><li><b>Рамка «Пламя»</b> вокруг аватара</li><li>Анимированный ник: <b>Золото и Аврора</b></li><li><b>Подсветка</b> ваших отзывов</li><li>Место на <b>стене спонсоров</b> и галочка</li></ul><div class="cta" id="plusAct"></div></article>
+  </div>
+</div></section>
+
+<section id="sponsors" style="padding-top:20px"><div class="wrap">
+  <div class="head"><small>Спонсоры</small><h2>Стена спонсоров</h2><p>Люди, которые поддерживают WLauncher. Им достаются особые вещи, которых нет у остальных.</p></div>
+  <div class="spw" id="spWall"></div>
+  <div class="perks"><span><i class="mk i5"></i>Рамка «Пламя» вокруг аватара</span><span><i class="mk i5"></i>Анимированный ник: Золото и Аврора</span><span><i class="mk i5"></i>Подсветка отзывов</span><span><i class="mk i5"></i>Место на стене и галочка</span></div>
+</div></section>
+
+<section id="reviews"><div class="wrap">
+  <div class="head"><small>Отзывы</small><h2>Что говорят игроки</h2><p id="revSum"></p></div>
+  <div class="revw"><div class="revl" id="revList"></div><div class="revf" id="revForm"></div></div>
+</div></section>
+
+<section id="download" style="padding-top:20px"><div class="wrap"><div class="dlbox rv">
+  <div><h2>Скачай WLauncher бесплатно</h2><p>Без подписок и скрытых платежей. Регистрация для скачивания не нужна.</p><div class="ver">Версия <b id="verTxt"></b></div><p class="lic">Скачивая и устанавливая ПО «WLauncher», вы соглашаетесь с условиями лицензионного соглашения.</p></div>
+  <div class="dls">
+    <div class="dc"><div><h3>Windows</h3><p>Windows 10 и новее, 64-бит</p></div><button class="btn p s" onclick="dl('windows')"><i class="mk di i1"></i>Скачать</button></div>
+          </div>
+</div></div></section>
+
+<section id="faq" style="padding-top:20px"><div class="wrap faqw">
+  <div class="head"><small>FAQ</small><h2>Частые вопросы</h2><p>Коротко о главном</p></div>
+  <div>
+    <details><summary>Лаунчер правда бесплатный?</summary><p>Да, WLauncher полностью бесплатен: скачивание, моды, сборки и кастомизация.</p></details>
+    <details><summary>Какие загрузчики модов поддерживаются?</summary><p>Forge, Fabric, Quilt и Optifine, а также все версии Minecraft.</p></details>
+    <details><summary>Нужно ли устанавливать Java?</summary><p>Нет. Лаунчер сам скачает нужную версию Java.</p></details>
+    <details><summary>Нужна ли регистрация?</summary><p>Для скачивания не нужна. Аккаунт на сайте нужен для личного кабинета.</p></details>
+  </div>
+</div></section>
+
+</main>
+
+<main class="view" id="v-cabinet"><div class="wrap"><div class="app"><div class="atop"><div class="atabs" id="cTabs"></div><div id="cAv"></div></div><div id="cBody"></div></div></div></main>
+
+<main class="view" id="v-admin"><div class="wrap"><h2 class="ah">Админ панель</h2>
+  <div class="stats" id="adStats"></div>
+  <div class="panel"><h2>Пользователи</h2><div class="tw"><table><thead><tr><th>Ник</th><th>Почта</th><th>Роль</th><th>Дата</th><th></th></tr></thead><tbody id="adUsers"></tbody></table></div></div>
+  <div class="panel"><h2>Отзывы</h2><div class="tw"><table><thead><tr><th>Автор</th><th>Оценка</th><th>Текст</th><th></th></tr></thead><tbody id="adRevs"></tbody></table></div></div>
+  <div class="panel"><h2>Загрузки</h2><div class="kv" id="adDl"></div>
+    <p style="color:var(--mute);font-size:13px;margin-top:16px">Данные хранятся в браузере. Ссылки на файлы лаунчера задаются в начале скрипта страницы (CONFIG).</p></div>
+</div></main>
+
+
+<footer><div class="wrap"><div class="fg">
+  <div><a class="logo" href="#top" onclick="show('home')" style="padding:0 0 12px"><img src="assets/logo.png" alt="WLauncher"><span>WLauncher</span></a><p>Бесплатный лаунчер Minecraft. Моды, сборки и игра с друзьями в пару кликов.</p></div>
+  <div><h4>Лаунчер</h4><a href="#download" onclick="show('home')">Скачать</a><a href="#plans" onclick="show('home')">Тарифы</a><a href="#faq" onclick="show('home')">FAQ</a></div>
+  <div><h4>Аккаунт</h4><a href="#" onclick="openAuth('login');return false">Войти</a><a href="#" onclick="openAuth('reg');return false">Регистрация</a><a href="#" onclick="show('cabinet');return false">Личный кабинет</a></div>
+  <div><h4>Сообщество</h4><a href="#reviews" onclick="show('home')">Отзывы</a><a href="#sponsors" onclick="show('home')">Спонсоры</a></div>
+</div><div class="fb"><span>© 2026 WLauncher. Не является продуктом Mojang или Microsoft.</span><span>Сделано для игроков Minecraft</span></div></div><div class="big">WLauncher</div></footer>
+
+<div class="modal" id="authM" onclick="if(event.target===this)closeAuth()"><div class="box">
+  <h2 id="aTitle">Вход</h2><p id="aSub">Войдите в свой аккаунт</p>
+  <div id="nickW" style="display:none"><label>Ник</label><input id="fNick" maxlength="16" autocomplete="username"></div>
+  <label>Почта</label><input id="fMail" type="email" autocomplete="email">
+  <label>Пароль</label><input id="fPass" type="password" autocomplete="current-password">
+  <div class="err" id="aErr"></div>
+  <button class="btn p" id="aBtn" onclick="submitAuth()">Войти</button>
+  <div class="sw" id="aSw"></div>
+</div></div>
+<div class="modal" id="dailyM" onclick="if(event.target===this)closeDaily()"><div class="box"><h2>Ежедневная награда</h2><div id="dailyBody"></div><button class="btn g s" style="margin-top:14px;width:100%" onclick="closeDaily()">Закрыть</button></div></div>
+<div class="modal" id="cfM"><div class="box"><h2>Подтверждение</h2><p id="cfT" style="margin-top:8px"></p><div class="cta" style="margin-top:20px;justify-content:flex-end"><button class="btn g s" style="width:auto;margin:0" onclick="cfNo()">Отмена</button><button class="btn p s" style="width:auto;margin:0" onclick="cfYes()">Да</button></div></div></div>
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
